@@ -38,6 +38,7 @@ classdef boundaryConditions < handle
             valid = sum([obj.u.isempty, obj.v.isempty, obj.p.isempty]) == 1;
         end
 
+
     end
 
 end

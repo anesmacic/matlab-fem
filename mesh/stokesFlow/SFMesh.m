@@ -47,6 +47,8 @@ classdef SFMesh < handle
         idof
         dof2node
         ndof
+        isExterior
+        u2p_idx
     end
 
     methods
@@ -96,7 +98,10 @@ classdef SFMesh < handle
             obj.dof2node = zeros(ndof, 1);
             obj.dof2node(1:nu)      = 1:obj.nNodes;
             obj.dof2node(1+nu:2*nu) = 1:obj.nNodes;
-            obj.dof2node(2*nu+1:end)= sort(unique(pconnectivity(:)));
+            pnodes = sort(unique(pconnectivity(:)));
+            obj.dof2node(2*nu+1:end) = pnodes;
+            obj.u2p_idx = zeros(obj.nNodes, 1);
+            obj.u2p_idx(pnodes) = 1:numel(pnodes);
         end
 
         function removeUnusedMesh(obj)
@@ -120,5 +125,62 @@ classdef SFMesh < handle
             end
         end
 
+        function [hasPrescribedBC, BCValue] = getBC(obj, options)
+            arguments
+                obj
+                options.resolver
+            end
+            hasPrescribedBC = zeros(obj.ndof, 1, 'logical');
+            BCValue         = zeros(obj.ndof, 1);
+            for i = 1:numel(obj.bc)
+                % assuming that resolver is a structure array with two
+                % entries - boundaries which contain a list of BC ids and
+                % fcns to apply to bc object
+                for j = 1:numel(options.resolver)
+                    if ismember(obj.bc(i).id, options.resolver(j).boundaries)
+                        if isvalid(options.resolver(j).boundaries)
+                            options.resolver(j).fcns{1}(obj.bc(i));
+                            options.resolver(j).fcns{2}(obj.bc(i));
+                        else
+                            error('getBC:InvalidInput','BC Resolver is invalid.');
+                        end
+                    end
+                end
+                obj.isExterior = zeros(obj.nNodes, 1, 'logical');
+                % extract BC from bcs
+                for i = 1:numel(obj.bc)
+                    n = obj.bc(i).nodes;
+                    obj.isExterior(n) = true;
+                    if ~obj.bc(i).u.isempty
+                        hasPrescribedBC(n) = true;
+                        if obj.bc(i).u.type == boundaryConditionType.Constant
+                            BCValue(n) = obj.bc(i).u.value;
+                        else
+                            BCValue(n) = obj.bc(i).u.fcn(obj.nodes(n,1), obj.nodes(n,2));
+                        end
+                    end
+                    if ~obj.bc(i).v.isempty
+                        hasPrescribedBC(n + obj.nNodes) = true;
+                        if obj.bc(i).v.type == boundaryConditionType.Constant
+                            BCValue(n + obj.nNodes) = obj.bc(i).v.value;
+                        else
+                            BCValue(n + obj.nNodes) = obj.bc(i).v.fcn(obj.nodes(n,1), obj.nodes(n,2));
+                        end
+                    end
+                    if ~obj.bc(i).p.isempty
+                        n = obj.u2p_idx(n);
+                        idx = n(n~=0);
+                        n = n(idx);
+                        hasPrescribedBC(n + 2*obj.nNodes) = true;
+                        if obj.bc(i).u.type == boundaryConditionType.Constant
+                            BCValue(n + 2*obj.nNodes) = obj.bc(i).p.value;
+                        else
+                            BCValue(n + 2*obj.nNodes) = obj.bc(i).p.fcn(obj.nodes(obj.bc(i).nodes(idx),1), obj.nodes(obj.bc(i).nodes(idx),2));
+                        end
+                    end
+                end
+            end
+
+        end
     end
 end
