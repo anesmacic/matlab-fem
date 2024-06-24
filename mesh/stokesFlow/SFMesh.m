@@ -75,7 +75,7 @@ classdef SFMesh < handle
                 options.nPE = 4
             end
             obj.nodes = nodes;
-            obj.connectivity = connectivity;
+            obj.connectivity = connectivity(:,1:options.nVE);
             obj.nNodes = size(obj.nodes, 1);
             obj.nElements = size(obj.connectivity, 1);
             obj.bc = boundaryConditions.empty;
@@ -95,7 +95,7 @@ classdef SFMesh < handle
             obj.idof(1     :nu,   1) = 1;
             obj.idof(nu+1  :2*nu, 2) = 1;
             obj.idof(2*nu+1:end,  3) = 1;
-            obj.dof2node = zeros(ndof, 1);
+            obj.dof2node = zeros(obj.ndof, 1);
             obj.dof2node(1:nu)      = 1:obj.nNodes;
             obj.dof2node(1+nu:2*nu) = 1:obj.nNodes;
             pnodes = sort(unique(pconnectivity(:)));

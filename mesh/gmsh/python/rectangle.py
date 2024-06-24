@@ -36,16 +36,18 @@ def makeMesh(args):
     gmsh.model.geo.addCurveLoop([1, 2, 3, 4], 1)
     gmsh.model.geo.addPlaneSurface([1], 1)
 
-    gmsh.model.geo.setTransfiniteSurface(1)
-    gmsh.model.geo.setRecombine(2, 1)
+    gmsh.model.geo.mesh.setTransfiniteSurface(1)
+    gmsh.model.geo.mesh.setRecombine(2, 1)
 
-    gmsh.model.geo.setTransfiniteCurve(1, args.nElementsX, "Progression", 1)
-    gmsh.model.geo.setTransfiniteCurve(3, args.nElementsX, "Progression", 1)
-    gmsh.model.geo.setTransfiniteCurve(2, args.nElementsZ, "Progression", 1)
-    gmsh.model.geo.setTransfiniteCurve(4, args.nElementsZ, "Progression", 1)
+    gmsh.model.geo.mesh.setTransfiniteCurve(1, args.nElementsX, "Progression", 1)
+    gmsh.model.geo.mesh.setTransfiniteCurve(3, args.nElementsX, "Progression", 1)
+    gmsh.model.geo.mesh.setTransfiniteCurve(2, args.nElementsZ, "Progression", 1)
+    gmsh.model.geo.mesh.setTransfiniteCurve(4, args.nElementsZ, "Progression", 1)
 
     gmsh.model.geo.synchronize()
 
+    gmsh.option.setNumber("Mesh.ElementOrder", 2)
+    
     gmsh.model.mesh.generate(2)
     
     boundaries = []
