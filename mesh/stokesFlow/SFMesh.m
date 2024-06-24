@@ -46,6 +46,7 @@ classdef SFMesh < handle
         nodes % Node coordinates (nNodes x 2 numeric matrix, read-only)
         idof
         dof2node
+        ndof
     end
 
     methods
@@ -87,8 +88,8 @@ classdef SFMesh < handle
             pconnectivity = obj.connectivity(:,1:obj.nPE);
             np = numel(unique(pconnectivity(:)));
             nu = obj.nNodes;
-            ndof = nu*2 + np;
-            obj.idof = zeros(ndof, 3,'logical');
+            obj.ndof = nu*2 + np;
+            obj.idof = zeros(obj.ndof, 3,'logical');
             obj.idof(1     :nu,   1) = 1;
             obj.idof(nu+1  :2*nu, 2) = 1;
             obj.idof(2*nu+1:end,  3) = 1;
@@ -119,14 +120,5 @@ classdef SFMesh < handle
             end
         end
 
-        function [dofType, dofHasBC, dofBCValue] = getDOFs(obj, options)
-            arguments
-                obj
-                options.resolver
-            end
-            dofType = zeros(2*obj.nNodes)
-        end
-
-        
     end
 end
